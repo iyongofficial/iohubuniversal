@@ -1,10 +1,11 @@
 -- // GAME CHECKER //
-local TargetGameId = 101145924013716 -- CHANGE THIS TO YOUR GAME ID
+local TargetGameId = 101145924013716 -- YOUR GAME ID
 local CurrentId = game.PlaceId
 
 local UserInputService = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
 local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
 
 local player = Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
@@ -12,7 +13,8 @@ local playerGui = player:WaitForChild("PlayerGui")
 -- // CONFIGURATION //
 local _G_KeySystem = true 
 local _G_KeyInput = "1234" 
-local _G_PastebinLink = "" -- Put your raw pastebin link here if you have one
+local _G_PastebinLink = "https://pastebin.com/raw/6WaLSFgv" 
+local _G_DiscordLink = "https://discord.gg/gagshideout" -- PUT YOUR DISCORD LINK HERE
 
 -- // 1. CREATE THE SCREEN GUI //
 local screenGui = Instance.new("ScreenGui")
@@ -20,7 +22,7 @@ screenGui.Name = "ScriptHubUI"
 screenGui.ResetOnSpawn = false
 screenGui.Parent = playerGui
 
--- // 2. MAIN FRAME //
+-- // 2. MAIN FRAME (The Blue Gradient Box) //
 local mainFrame = Instance.new("Frame")
 mainFrame.Name = "MainFrame"
 mainFrame.Size = UDim2.new(0, 500, 0, 350)
@@ -38,26 +40,41 @@ mainCorner.Parent = mainFrame
 
 local mainGradient = Instance.new("UIGradient")
 mainGradient.Color = ColorSequence.new({
-	ColorSequenceKeypoint.new(0, Color3.fromRGB(10, 10, 40)),
-	ColorSequenceKeypoint.new(1, Color3.fromRGB(60, 110, 200))
+	ColorSequenceKeypoint.new(0, Color3.fromRGB(0, 0, 30)),
+	ColorSequenceKeypoint.new(0.5, Color3.fromRGB(20, 60, 120)),
+	ColorSequenceKeypoint.new(1, Color3.fromRGB(80, 160, 255))
 })
-mainGradient.Rotation = 45
+mainGradient.Rotation = 90
 mainGradient.Parent = mainFrame
 
 -- // 3. HEADER //
 local headerFrame = Instance.new("Frame")
 headerFrame.Name = "Header"
 headerFrame.Size = UDim2.new(1, 0, 0, 50)
-headerFrame.BackgroundTransparency = 1
+headerFrame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+headerFrame.BackgroundTransparency = 0.5
+headerFrame.BorderSizePixel = 0
 headerFrame.Parent = mainFrame
 
+local headerCorner = Instance.new("UICorner")
+headerCorner.CornerRadius = UDim.new(0, 16)
+headerCorner.Parent = headerFrame
+
+local headerCover = Instance.new("Frame")
+headerCover.Size = UDim2.new(1, 0, 0, 10)
+headerCover.Position = UDim2.new(0, 0, 1, -10)
+headerCover.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+headerCover.BackgroundTransparency = 0.5
+headerCover.BorderSizePixel = 0
+headerCover.Parent = headerFrame
+
 local titleLabel = Instance.new("TextLabel")
-titleLabel.Text = "SCRIPT HUB"
+titleLabel.Text = "IO HUB"
 titleLabel.Size = UDim2.new(0, 200, 1, 0)
 titleLabel.Position = UDim2.new(0, 15, 0, 0)
 titleLabel.BackgroundTransparency = 1
 titleLabel.Font = Enum.Font.FredokaOne
-titleLabel.TextSize = 32
+titleLabel.TextSize = 34
 titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
 titleLabel.TextXAlignment = Enum.TextXAlignment.Left
 titleLabel.Parent = headerFrame
@@ -70,12 +87,8 @@ titleGradient.Color = ColorSequence.new({
 titleGradient.Rotation = 90
 titleGradient.Parent = titleLabel
 
-local titleStroke = Instance.new("UIStroke")
-titleStroke.Thickness = 3
-titleStroke.Parent = titleLabel
-
 -- // 4. CONTROL BUTTONS //
-local function createControlBtn(text, posOffset, color1, color2)
+local function createControlBtn(text, posOffset, color)
 	local btn = Instance.new("TextButton")
 	btn.Size = UDim2.new(0, 30, 0, 30)
 	btn.Position = UDim2.new(1, posOffset, 0.5, -15)
@@ -83,8 +96,8 @@ local function createControlBtn(text, posOffset, color1, color2)
 	btn.Font = Enum.Font.FredokaOne
 	btn.TextScaled = true
 	btn.TextColor3 = Color3.new(1,1,1)
-	btn.TextStrokeTransparency = 0
-	btn.BackgroundColor3 = Color3.new(1,1,1)
+	btn.TextStrokeTransparency = 1
+	btn.BackgroundColor3 = color
 	btn.AutoButtonColor = false
 	btn.ZIndex = 2
 	btn.Parent = headerFrame
@@ -92,32 +105,43 @@ local function createControlBtn(text, posOffset, color1, color2)
 	local corner = Instance.new("UICorner")
 	corner.CornerRadius = UDim.new(0, 6)
 	corner.Parent = btn
-	
-	local grad = Instance.new("UIGradient")
-	grad.Color = ColorSequence.new({
-		ColorSequenceKeypoint.new(0, color1),
-		ColorSequenceKeypoint.new(1, color2)
-	})
-	grad.Rotation = 90
-	grad.Parent = btn
-	
-	local stroke = Instance.new("UIStroke")
-	stroke.Thickness = 2
-	stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-	stroke.Parent = btn
+
 	return btn
 end
 
-local closeBtn = createControlBtn("X", -40, Color3.fromRGB(200, 100, 200), Color3.fromRGB(150, 50, 150))
-local minBtn = createControlBtn("-", -75, Color3.fromRGB(100, 120, 150), Color3.fromRGB(50, 70, 90))
+local closeBtn = createControlBtn("X", -40, Color3.fromRGB(200, 100, 200))
+local minBtn = createControlBtn("-", -75, Color3.fromRGB(100, 120, 150))
 
--- // 5. CONTENT AREA //
+-- // 5. NAVIGATION BAR //
+local navContainer = Instance.new("Frame")
+navContainer.Name = "NavBar"
+navContainer.Size = UDim2.new(1, 0, 0, 40)
+navContainer.Position = UDim2.new(0, 0, 0, 50)
+navContainer.BackgroundColor3 = Color3.fromRGB(20, 40, 80)
+navContainer.BackgroundTransparency = 0.3
+navContainer.BorderSizePixel = 0
+navContainer.Parent = mainFrame
+
+local navList = Instance.new("Frame")
+navList.Size = UDim2.new(1, -20, 1, 0)
+navList.Position = UDim2.new(0, 10, 0, 0)
+navList.BackgroundTransparency = 1
+navList.Parent = navContainer
+
+local navLayout = Instance.new("UIListLayout")
+navLayout.FillDirection = Enum.FillDirection.Horizontal
+navLayout.Padding = UDim.new(0, 10)
+navLayout.SortOrder = Enum.SortOrder.LayoutOrder
+navLayout.VerticalAlignment = Enum.VerticalAlignment.Center
+navLayout.Parent = navList
+
+-- // 6. CONTENT AREA //
 local contentFrame = Instance.new("Frame")
 contentFrame.Name = "Content"
-contentFrame.Size = UDim2.new(1, -20, 1, -90)
-contentFrame.Position = UDim2.new(0, 10, 0, 85)
-contentFrame.BackgroundColor3 = Color3.fromRGB(0, 0, 20)
-contentFrame.BackgroundTransparency = 0.5
+contentFrame.Size = UDim2.new(1, -20, 1, -100)
+contentFrame.Position = UDim2.new(0, 10, 0, 95)
+contentFrame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+contentFrame.BackgroundTransparency = 0.6
 contentFrame.BorderSizePixel = 0
 contentFrame.Parent = mainFrame
 
@@ -149,8 +173,58 @@ local mainPage = createPage("Main")
 local miscPage = createPage("Misc")
 local tpPage = createPage("Teleport")
 
+-- // TAB SELECTION LOGIC //
+local allTabs = {}
+
+local function SelectTab(selectedBtn, targetPage)
+	for _, btn in pairs(allTabs) do
+		btn.BackgroundTransparency = 1
+		btn.TextColor3 = Color3.new(1,1,1)
+		btn.TextStrokeTransparency = 0
+		if btn:FindFirstChild("ActiveCorner") then btn.ActiveCorner:Destroy() end
+	end
+	
+	selectedBtn.BackgroundTransparency = 0
+	selectedBtn.BackgroundColor3 = Color3.fromRGB(170, 255, 0)
+	selectedBtn.TextColor3 = Color3.new(0,0,0)
+	selectedBtn.TextStrokeTransparency = 1
+	
+	local corner = Instance.new("UICorner")
+	corner.Name = "ActiveCorner"
+	corner.CornerRadius = UDim.new(0, 6)
+	corner.Parent = selectedBtn
+	
+	mainPage.Visible = false
+	miscPage.Visible = false
+	tpPage.Visible = false
+	targetPage.Visible = true
+end
+
+local function createTab(text, order, linkedPage)
+	local tab = Instance.new("TextButton")
+	tab.LayoutOrder = order
+	tab.Text = text
+	tab.Font = Enum.Font.FredokaOne
+	tab.TextSize = 20
+	tab.Size = UDim2.new(0, 100, 0, 30)
+	tab.BackgroundTransparency = 1
+	tab.TextColor3 = Color3.new(1,1,1)
+	tab.TextStrokeTransparency = 0
+	tab.Parent = navList
+	
+	table.insert(allTabs, tab)
+	tab.MouseButton1Click:Connect(function() SelectTab(tab, linkedPage) end)
+	return tab
+end
+
+local mainTab = createTab("MAIN", 1, mainPage)
+local miscTab = createTab("MISC", 2, miscPage)
+local tpTab = createTab("TELEPORT", 3, tpPage)
+SelectTab(mainTab, mainPage)
+
 -- // FEATURES //
-local function createToggle(text, parentPage)
+
+local function createToggle(text, parentPage, callback)
 	local toggleBtn = Instance.new("TextButton")
 	toggleBtn.Size = UDim2.new(0.9, 0, 0, 40)
 	toggleBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
@@ -163,12 +237,6 @@ local function createToggle(text, parentPage)
 	local corner = Instance.new("UICorner")
 	corner.CornerRadius = UDim.new(0, 8)
 	corner.Parent = toggleBtn
-	
-	local stroke = Instance.new("UIStroke")
-	stroke.Color = Color3.fromRGB(60, 60, 60)
-	stroke.Thickness = 2
-	stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-	stroke.Parent = toggleBtn
 
 	local toggled = false
 	toggleBtn.MouseButton1Click:Connect(function()
@@ -176,12 +244,11 @@ local function createToggle(text, parentPage)
 		if toggled then
 			toggleBtn.Text = text .. " [ON]"
 			toggleBtn.BackgroundColor3 = Color3.fromRGB(50, 200, 50)
-			-- ADD YOUR TOGGLE ON CODE HERE
 		else
 			toggleBtn.Text = text .. " [OFF]"
 			toggleBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-			-- ADD YOUR TOGGLE OFF CODE HERE
 		end
+		if callback then callback(toggled) end
 	end)
 end
 
@@ -205,96 +272,89 @@ local function createFeatureBtn(text, parentPage, callback)
 end
 
 -- MAIN PAGE FEATURES
-createToggle("Auto Collect Coin", mainPage)
-createToggle("Auto Spin", mainPage)
+createToggle("Auto Collect Coin", mainPage, function(state)
+	print("Auto Collect is now:", state)
+end)
+
+createToggle("Auto Spin", mainPage, function(state)
+	print("Auto Spin is now:", state)
+end)
 
 -- MISC PAGE FEATURES
 createFeatureBtn("Zoom", miscPage, function()
-	workspace.CurrentCamera.FieldOfView = 20
-	wait(1)
-	workspace.CurrentCamera.FieldOfView = 70
+	local player = game.Players.LocalPlayer
+	player.CameraMaxZoomDistance = 1000
+	player.CameraMinZoomDistance = 0.5 
+	workspace.CurrentCamera.FieldOfView = 90
 end)
 
-createFeatureBtn("Fly", miscPage, function() 
+-- FLY BUTTON
+local flyConnection 
+local bv, bg 
 
-print("Fly Enabled") end)
+createToggle("Fly", miscPage, function(toggled)
+	local char = player.Character or player.CharacterAdded:Wait()
+	local root = char:FindFirstChild("HumanoidRootPart")
+	local hum = char:FindFirstChild("Humanoid")
+	local camera = workspace.CurrentCamera
+
+	if not root or not hum then return end
+
+	if toggled then
+		for _, v in pairs(root:GetChildren()) do
+			if v:IsA("BodyVelocity") or v:IsA("BodyGyro") then v:Destroy() end
+		end
+
+		bv = Instance.new("BodyVelocity")
+		bv.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
+		bv.Velocity = Vector3.new(0, 0, 0)
+		bv.Parent = root
+
+		bg = Instance.new("BodyGyro")
+		bg.MaxTorque = Vector3.new(math.huge, math.huge, math.huge)
+		bg.P = 20000 
+		bg.Parent = root
+
+		local speed = 50 
+
+		flyConnection = RunService.RenderStepped:Connect(function()
+			if not char or not root or not hum then return end
+			root.Anchored = false
+			hum.PlatformStand = true 
+			local moveDir = hum.MoveDirection 
+			if moveDir.Magnitude > 0 then
+				local cameraCF = camera.CFrame
+				local look = cameraCF.LookVector
+				bv.Velocity = moveDir * speed + Vector3.new(0, look.Y * speed * (moveDir:Dot(cameraCF.LookVector)), 0)
+			else
+				bv.Velocity = Vector3.new(0, 0, 0)
+			end
+			bg.CFrame = camera.CFrame
+		end)
+	else
+		if flyConnection then 
+			flyConnection:Disconnect() 
+			flyConnection = nil
+		end
+		if bv then bv:Destroy() end
+		if bg then bg:Destroy() end
+		hum.PlatformStand = false
+		root.Velocity = Vector3.new(0,0,0) 
+	end
+end)
 
 -- TELEPORT PAGE FEATURES
 createFeatureBtn("Tp Celestial", tpPage, function()
 	if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-		player.Character.HumanoidRootPart.CFrame = CFrame.new(0, 100, 0)
+		player.Character.HumanoidRootPart.CFrame = CFrame.new(2607.5, -9.02, 0)
 	end
 end)
 
 createFeatureBtn("Tp Secret", tpPage, function()
-	game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(2252.5, -9.02498817, 0, 100, 0, 1, -1, 0, 0, 0, -1, 0)
-end)
-
--- // NAVIGATION //
-local navContainer = Instance.new("Frame")
-navContainer.Name = "NavBar"
-navContainer.Size = UDim2.new(1, -20, 0, 30)
-navContainer.Position = UDim2.new(0, 10, 0, 50)
-navContainer.BackgroundTransparency = 1
-navContainer.Parent = mainFrame
-
-local navLayout = Instance.new("UIListLayout")
-navLayout.FillDirection = Enum.FillDirection.Horizontal
-navLayout.Padding = UDim.new(0, 10)
-navLayout.SortOrder = Enum.SortOrder.LayoutOrder
-navLayout.VerticalAlignment = Enum.VerticalAlignment.Center
-navLayout.Parent = navContainer
-
-local allTabs = {}
-
-local function SelectTab(selectedBtn, targetPage)
-	for _, btn in pairs(allTabs) do
-		btn.BackgroundTransparency = 1
-		btn.TextColor3 = Color3.new(1,1,1)
-		if btn:FindFirstChild("ActiveStyle") then btn.ActiveStyle:Destroy() end
-		if btn:FindFirstChild("ActiveCorner") then btn.ActiveCorner:Destroy() end
+	if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+		player.Character.HumanoidRootPart.CFrame = CFrame.new(2252.5, -9.02, 0)
 	end
-	selectedBtn.BackgroundTransparency = 0
-	selectedBtn.TextColor3 = Color3.new(0,0,0)
-	
-	local corner = Instance.new("UICorner")
-	corner.Name = "ActiveCorner"
-	corner.CornerRadius = UDim.new(0, 6)
-	corner.Parent = selectedBtn
-	
-	local grad = Instance.new("UIGradient")
-	grad.Name = "ActiveStyle"
-	grad.Color = ColorSequence.new({
-		ColorSequenceKeypoint.new(0, Color3.fromRGB(150, 255, 50)),
-		ColorSequenceKeypoint.new(1, Color3.fromRGB(200, 255, 0))
-	})
-	grad.Parent = selectedBtn
-	
-	mainPage.Visible = false
-	miscPage.Visible = false
-	tpPage.Visible = false
-	targetPage.Visible = true
-end
-
-local function createTab(text, order, linkedPage)
-	local tab = Instance.new("TextButton")
-	tab.LayoutOrder = order
-	tab.Text = text
-	tab.Font = Enum.Font.FredokaOne
-	tab.TextSize = 18
-	tab.Size = UDim2.new(0, 80, 1, 0)
-	tab.BackgroundTransparency = 1
-	tab.TextColor3 = Color3.new(1,1,1)
-	tab.Parent = navContainer
-	table.insert(allTabs, tab)
-	tab.MouseButton1Click:Connect(function() SelectTab(tab, linkedPage) end)
-	return tab
-end
-
-local mainTab = createTab("MAIN", 1, mainPage)
-local miscTab = createTab("MISC", 2, miscPage)
-local tpTab = createTab("TELEPORT", 3, tpPage)
-SelectTab(mainTab, mainPage)
+end)
 
 -- // OPEN BUTTON //
 local openBtn = Instance.new("TextButton")
@@ -302,7 +362,7 @@ openBtn.Name = "OpenButton"
 openBtn.Size = UDim2.new(0, 50, 0, 50)
 openBtn.Position = UDim2.new(0, 20, 0.5, -25)
 openBtn.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-openBtn.Text = "H"
+openBtn.Text = "IOH"
 openBtn.Font = Enum.Font.FredokaOne
 openBtn.TextSize = 24
 openBtn.TextColor3 = Color3.new(1,1,1)
@@ -312,17 +372,6 @@ openBtn.Parent = screenGui
 local openCorner = Instance.new("UICorner")
 openCorner.CornerRadius = UDim.new(1, 0)
 openCorner.Parent = openBtn
-local openStroke = Instance.new("UIStroke")
-openStroke.Thickness = 2
-openStroke.Color = Color3.new(1,1,1)
-openStroke.Parent = openBtn
-local openGradient = Instance.new("UIGradient")
-openGradient.Color = ColorSequence.new({
-	ColorSequenceKeypoint.new(0, Color3.fromRGB(60, 110, 200)),
-	ColorSequenceKeypoint.new(1, Color3.fromRGB(10, 10, 40))
-})
-openGradient.Rotation = -45
-openGradient.Parent = openBtn
 
 -- // KEY SYSTEM //
 local keyFrame = Instance.new("Frame")
@@ -337,13 +386,9 @@ keyFrame.Parent = screenGui
 local keyCorner = Instance.new("UICorner")
 keyCorner.CornerRadius = UDim.new(0, 10)
 keyCorner.Parent = keyFrame
-local keyStroke = Instance.new("UIStroke")
-keyStroke.Color = Color3.fromRGB(60, 110, 200)
-keyStroke.Thickness = 2
-keyStroke.Parent = keyFrame
 
 local keyTitle = Instance.new("TextLabel")
-keyTitle.Text = "SECURITY CHECK"
+keyTitle.Text = "SUBMIT A KEY"
 keyTitle.Size = UDim2.new(1, 0, 0, 40)
 keyTitle.BackgroundTransparency = 1
 keyTitle.Font = Enum.Font.FredokaOne
@@ -365,19 +410,7 @@ local inputCorner = Instance.new("UICorner")
 inputCorner.CornerRadius = UDim.new(0, 6)
 inputCorner.Parent = keyInput
 
-local verifyBtn = Instance.new("TextButton")
-verifyBtn.Text = "VERIFY"
-verifyBtn.Size = UDim2.new(0.4, 0, 0, 30)
-verifyBtn.Position = UDim2.new(0.3, 0, 0.7, 0)
-verifyBtn.BackgroundColor3 = Color3.fromRGB(60, 110, 200)
-verifyBtn.TextColor3 = Color3.new(1,1,1)
-verifyBtn.Font = Enum.Font.FredokaOne
-verifyBtn.TextSize = 16
-verifyBtn.Parent = keyFrame
-local verifyCorner = Instance.new("UICorner")
-verifyCorner.CornerRadius = UDim.new(0, 6)
-verifyCorner.Parent = verifyBtn
-
+-- STATUS LABEL (Moved Up to check status)
 local statusLabel = Instance.new("TextLabel")
 statusLabel.Text = ""
 statusLabel.Size = UDim2.new(1, 0, 0, 20)
@@ -388,26 +421,66 @@ statusLabel.TextSize = 12
 statusLabel.TextColor3 = Color3.fromRGB(255, 50, 50)
 statusLabel.Parent = keyFrame
 
+-- === CHANGED SECTION: SPLIT BUTTONS ===
+
+-- 1. VERIFY BUTTON (Moved to Left)
+local verifyBtn = Instance.new("TextButton")
+verifyBtn.Text = "VERIFY"
+verifyBtn.Size = UDim2.new(0.35, 0, 0, 30) -- Smaller width
+verifyBtn.Position = UDim2.new(0.1, 0, 0.7, 0) -- Moved Left
+verifyBtn.BackgroundColor3 = Color3.fromRGB(60, 110, 200)
+verifyBtn.TextColor3 = Color3.new(1,1,1)
+verifyBtn.Font = Enum.Font.FredokaOne
+verifyBtn.TextSize = 16
+verifyBtn.Parent = keyFrame
+
+local verifyCorner = Instance.new("UICorner")
+verifyCorner.CornerRadius = UDim.new(0, 6)
+verifyCorner.Parent = verifyBtn
+
+-- 2. GET KEY BUTTON (New Button on Right)
+local getKeyBtn = Instance.new("TextButton")
+getKeyBtn.Text = "GET KEY"
+getKeyBtn.Size = UDim2.new(0.35, 0, 0, 30) 
+getKeyBtn.Position = UDim2.new(0.55, 0, 0.7, 0) -- Right Side
+getKeyBtn.BackgroundColor3 = Color3.fromRGB(50, 50, 50) -- Darker color
+getKeyBtn.TextColor3 = Color3.new(1,1,1)
+getKeyBtn.Font = Enum.Font.FredokaOne
+getKeyBtn.TextSize = 16
+getKeyBtn.Parent = keyFrame
+
+local getKeyCorner = Instance.new("UICorner")
+getKeyCorner.CornerRadius = UDim.new(0, 6)
+getKeyCorner.Parent = getKeyBtn
+
+-- === BUTTON FUNCTIONS ===
+
+-- Get Key Logic
+getKeyBtn.MouseButton1Click:Connect(function()
+	if setclipboard then
+		setclipboard(_G_DiscordLink)
+		statusLabel.Text = "LINK COPIED TO CLIPBOARD!"
+		statusLabel.TextColor3 = Color3.fromRGB(100, 255, 100)
+	else
+		print("Discord Link: " .. _G_DiscordLink)
+		statusLabel.Text = "CHECK F9 CONSOLE"
+		statusLabel.TextColor3 = Color3.fromRGB(255, 200, 50)
+	end
+end)
+
+-- Verify Logic
 verifyBtn.MouseButton1Click:Connect(function()
 	local enteredKey = keyInput.Text
 	local correctKey = _G_KeyInput 
 	
-	-- Smart Check: Works in both Studio AND Executors
-	local isStudio = game:GetService("RunService"):IsStudio()
-	
-	if isStudio then
-		print("⚠️ STUDIO DETECTED: Using hardcoded key " .. _G_KeyInput)
-	elseif _G_PastebinLink ~= "" then
+	if _G_PastebinLink ~= "" then
 		local success, result = pcall(function() return game:HttpGet(_G_PastebinLink) end)
-		if success then 
-			-- Removes spaces/newlines from Pastebin result
-			correctKey = string.gsub(result, "^%s*(.-)%s*$", "%1") 
-		end
+		if success then correctKey = string.gsub(result, "^%s*(.-)%s*$", "%1") end
 	end
 	
 	if enteredKey == correctKey then
 		statusLabel.TextColor3 = Color3.fromRGB(50, 255, 50)
-		statusLabel.Text = "SUCCESS!"
+		statusLabel.Text = "KEY VALID"
 		wait(0.5)
 		keyFrame:TweenPosition(UDim2.new(0.5, -150, 1.5, 0), "In", "Back", 0.5, true)
 		wait(0.5)
@@ -417,7 +490,7 @@ verifyBtn.MouseButton1Click:Connect(function()
 		mainFrame:TweenSize(UDim2.new(0,500,0,350), "Out", "Back", 0.3, true)
 	else
 		statusLabel.TextColor3 = Color3.fromRGB(255, 50, 50)
-		statusLabel.Text = "INCORRECT KEY"
+		statusLabel.Text = "INVALID KEY"
 		keyInput.Text = ""
 	end
 end)
